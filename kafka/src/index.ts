@@ -2,7 +2,7 @@ import { initKafka } from './admin';
 import { startTransactionProducer } from './producer';
 import { startTransactionConsumer } from './consumer';
 
-const TRANSACTION_FILE = '../data/transaction_data.csv';
+const TRANSACTION_FILE = './data/transaction_data.csv';
 
 const run = async () => {
     try {
