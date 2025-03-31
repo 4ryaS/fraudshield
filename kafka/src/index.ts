@@ -1,16 +1,12 @@
 import { initKafka } from './admin';
 import { startTransactionProducer } from './producer';
-import { startTransactionConsumer } from './consumer';
 
-const TRANSACTION_FILE = './data/transaction_data.csv';
+const TRANSACTION_FILE = './trimmed_dataset.csv';
 
 const run = async () => {
     try {
         // Initialize Kafka (create topic if needed)
         await initKafka();
-
-        // Start the transaction consumer
-        await startTransactionConsumer();
 
         // Start the transaction producer
         await startTransactionProducer(TRANSACTION_FILE);

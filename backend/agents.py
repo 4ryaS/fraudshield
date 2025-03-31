@@ -17,6 +17,7 @@ from langgraph.prebuilt import ToolNode
 from operator import itemgetter
 import logging
 import pandas as pd
+import asyncio
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -380,11 +381,11 @@ def create_fraud_detection_graph() -> StateGraph:
         
         logger.info(f"Risk scoring result: {risk_prediction} (probability: {risk_prob}, level: {risk_level})")
         
-        # Final decision based on risk scoring
-        if risk_level == "High" or (risk_prediction == "High Risk" and risk_prob > 0.7):
+        # Final decision based on risk scoring with more lenient thresholds
+        if risk_level == "High" or (risk_prediction == "High Risk" and risk_prob > 0.85):
             state["status"] = "rejected"
             state["reason"] = f"High risk transaction (probability: {risk_prob:.2f}, level: {risk_level})"
-        elif risk_level == "Medium" or (risk_prediction == "High Risk" and risk_prob > 0.5):
+        elif risk_level == "Medium" or (risk_prediction == "High Risk" and risk_prob > 0.6):
             state["status"] = "review"
             state["reason"] = f"Medium risk transaction (probability: {risk_prob:.2f}, level: {risk_level})"
         else:
@@ -457,16 +458,27 @@ def process_transaction(transaction_data: TransactionData, behavioral_data: Beha
                 "step": final_state["step"]
             }
         
-        return {
+        # Create the response with initial pending status
+        response = {
             "anomaly_detection": final_state["anomaly_result"],
             "transaction_monitoring": final_state.get("transaction_result"),
             "behavioral_analysis": final_state.get("behavioral_result"),
             "risk_scoring": final_state["risk_result"],
-            "status": final_state["status"],
+            "status": "pending",  # Start with pending status
             "reason": final_state["reason"],
             "step": final_state["step"],
             "messages": [msg.content for msg in final_state["messages"]]
         }
+        
+        # Update status to processed after a short delay
+        async def update_status():
+            await asyncio.sleep(2)  # Wait for 2 seconds
+            response["status"] = "processed"
+        
+        # Run the status update in the background
+        asyncio.create_task(update_status())
+        
+        return response
     except Exception as e:
         logger.error(f"Error in process_transaction: {str(e)}")
         return {
@@ -475,29 +487,5 @@ def process_transaction(transaction_data: TransactionData, behavioral_data: Beha
             "step": "process_transaction"
         }
 
-# Example usage
-if __name__ == "__main__":
-    transaction = TransactionData(
-        amount=100.0,  
-        oldbalanceOrg=100.0,
-        newbalanceOrig=0.0,  
-        oldbalanceDest=100.0,  
-        newbalanceDest=200.0,  
-        transaction_type="CASH_OUT"  
-    )
-
-    behavior = BehavioralData(
-        avg_transaction_amount=300.0,
-        max_transaction_amount=10000.0,
-        transaction_amount_std=200.0, 
-        avg_balance=25000.0,  
-        transaction_count=33, 
-        large_transaction_ratio=0.5,
-        balance_change_mean=300.0, 
-        type_CASH_OUT_ratio=0.0,  
-        type_DEBIT_ratio=0.5,
-        type_PAYMENT_ratio=0.5,
-        type_TRANSFER_ratio=0.0 
-    )  
-    result = process_transaction(transaction, behavior)
-    print(json.dumps(result, indent=2)) 
+# Export the process_transaction function for use by the API
+__all__ = ['process_transaction', 'TransactionData', 'BehavioralData'] 

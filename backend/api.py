@@ -303,13 +303,16 @@ async def predict_risk_scoring(transaction: TransactionRequest):
         # Get prediction probabilities
         risk_prob = models["risk_scoring"].predict_proba(features_df)[0][1]
         
+        # Adjust risk levels with more lenient thresholds
+        risk_level = "High" if risk_prob > 0.85 else "Medium" if risk_prob > 0.6 else "Low"
+        
         return PredictionResponse(
-            prediction="High Risk" if risk_prob > 0.5 else "Low Risk",
+            prediction="High Risk" if risk_prob > 0.85 else "Low Risk",
             fraud_probability=float(risk_prob),
             model_name="LightGBM Risk Scoring",
             details={
-                "risk_level": "High" if risk_prob > 0.7 else "Medium" if risk_prob > 0.3 else "Low",
-                "threshold": 0.5
+                "risk_level": risk_level,
+                "threshold": 0.85  # Updated threshold for high risk
             }
         )
     except Exception as e:

@@ -15,3 +15,5 @@ pandas
 lightgbm
 tenacity
 langgraph
+six
+kafka-python

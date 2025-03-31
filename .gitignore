@@ -1,3 +1,6 @@
 kafka/node_modules/
 kafka/data/
 kafka/build/
+
+backend/venv/
+backend/.env
