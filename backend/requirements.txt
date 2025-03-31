@@ -1,0 +1,17 @@
+fastapi
+uvicorn
+pydantic
+numpy
+torch
+scikit-learn
+xgboost
+joblib
+langchain
+langsmith
+langchain-groq
+requests
+python-dotenv 
+pandas
+lightgbm
+tenacity
+langgraph
